@@ -1,6 +1,5 @@
 package br.com.anderson.firebasechat;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -12,59 +11,48 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.NonNull;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.tabs.TabLayout;
+
+import androidx.viewpager.widget.ViewPager;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.RelativeLayout;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import br.com.anderson.firebasechat.adapter.AdapterUser;
 import br.com.anderson.firebasechat.adapter.SliderAdapter;
 import br.com.anderson.firebasechat.fragment.FragmentGrupos;
 import br.com.anderson.firebasechat.fragment.FragmentUsuarios;
-import br.com.anderson.firebasechat.model.Group;
-import br.com.anderson.firebasechat.model.User;
 
 public class MainActivity extends AppCompatActivity {
 
 
     private CoordinatorLayout activitymain;
-    private android.support.v7.widget.Toolbar toolbar;
-    private android.support.v4.view.ViewPager pager;
+    private androidx.appcompat.widget.Toolbar toolbar;
+    private ViewPager pager;
     FloatingActionButton group;
     FloatingActionButton file;
     TabLayout tabLayout;
@@ -200,29 +188,33 @@ public class MainActivity extends AppCompatActivity {
     }
     String token;
 
-    private void firebase(Uri uri){
+    private void firebase(Uri uri)throws IOException {
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReference();
         StorageReference imagesRef = storageRef.child("images");
         // Create a reference to 'images/mountains.jpg'
-        StorageReference mountainImagesRef = storageRef.child("images/" + new Date().getTime() + ".jpg");
+        final StorageReference mountainImagesRef = storageRef.child("images/" + new Date().getTime() + ".jpg");
+
+//
+//        final BitmapFactory.Options options = new BitmapFactory.Options();
+//        options.inJustDecodeBounds = true;
+//        // Calculate inSampleSize
+//        options.inSampleSize = 2;
+//
+//        // Decode bitmap with inSampleSize set
+//        options.inJustDecodeBounds = false;
+//        String path = uri.getPath();
+//        Bitmap bitmap  = BitmapFactory.decodeFile(path, options);
+//
+//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+//        byte[] data = baos.toByteArray();
 
 
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        // Calculate inSampleSize
-        options.inSampleSize = 2;
+        InputStream iStream =   getContentResolver().openInputStream(uri);
+        byte[] inputData = getBytes(iStream);
 
-        // Decode bitmap with inSampleSize set
-        options.inJustDecodeBounds = false;
-        String path = uri.getPath();
-        Bitmap bitmap  = BitmapFactory.decodeFile(path, options);
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-        byte[] data = baos.toByteArray();
-
-        UploadTask uploadTask = mountainImagesRef.putBytes(data);
+        UploadTask uploadTask = mountainImagesRef.putBytes(inputData);
         uploadTask.addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception exception) {
@@ -233,8 +225,18 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
-                Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                String path =taskSnapshot.getMetadata().getPath();
+                Uri downloadUrl = taskSnapshot. getUploadSessionUri();
                 Log.i("UploadTask", "onSuccess: " +downloadUrl);
+
+                mountainImagesRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                    @Override
+                    public void onSuccess(Uri uri) {
+                        String url = uri.toString();
+                        Log.i("UploadTask", "onSuccess: " +url);
+                    }
+                });
+
             }
         }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
             @Override
@@ -244,6 +246,18 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+
+    public byte[] getBytes(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
+        int bufferSize = 1024;
+        byte[] buffer = new byte[bufferSize];
+
+        int len = 0;
+        while ((len = inputStream.read(buffer)) != -1) {
+            byteBuffer.write(buffer, 0, len);
+        }
+        return byteBuffer.toByteArray();
+    }
 
     private void dispatchGetPictureIntent() {
         Intent intent = new Intent(
@@ -258,17 +272,22 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == 888 && resultCode == Activity.RESULT_OK && data != null){
             Uri selectedImage = data.getData();
-            Log.e("onActivityResult", selectedImage.toString());
+//            Log.e("onActivityResult", selectedImage.toString());
+//
+//            String[] filePathColumn = { MediaStore.Images.Media.DATA };
+//            Cursor cursor = this.getContentResolver().query(selectedImage,filePathColumn, null, null, null);
+//            cursor.moveToFirst();
+//
+//            int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+//            String picturePath = cursor.getString(columnIndex);
+//            cursor.close();
+//            Uri uri = new Uri.Builder().scheme("file").path(picturePath).build();
+            try {
+                firebase(selectedImage);
+            }catch (Exception ex){
+                ex.printStackTrace();
+            }
 
-            String[] filePathColumn = { MediaStore.Images.Media.DATA };
-            Cursor cursor = this.getContentResolver().query(selectedImage,filePathColumn, null, null, null);
-            cursor.moveToFirst();
-
-            int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-            String picturePath = cursor.getString(columnIndex);
-            cursor.close();
-            Uri uri = new Uri.Builder().scheme("file").path(picturePath).build();
-            firebase(uri);
 
         }
     }

@@ -4,12 +4,11 @@ import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -28,10 +27,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
-import br.com.anderson.firebasechat.model.Chat;
 import br.com.anderson.firebasechat.model.Group;
 import br.com.anderson.firebasechat.model.Message;
 import br.com.anderson.firebasechat.model.User;
@@ -142,6 +139,7 @@ public class ChatActivity extends AppCompatActivity {
     String token;
 
     public void messages(){
+
         mFirebaseDatabaseReference = FirebaseDatabase.getInstance().getReference();
         Query query = mFirebaseDatabaseReference.child("chat").child(id).child("menssages");
         // .orderByChild("from").equalTo(token);

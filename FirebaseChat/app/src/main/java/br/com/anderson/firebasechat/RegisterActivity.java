@@ -1,9 +1,12 @@
 package br.com.anderson.firebasechat;
 
 import android.content.Intent;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
@@ -91,6 +94,10 @@ public class RegisterActivity extends AppCompatActivity {
                                             Toast.LENGTH_SHORT).show();
                                 } else {
                                     AuthResult authResult = task.getResult();
+
+                                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(RegisterActivity.this);
+                                    preferences.edit().putString("token",authResult.getUser().getUid()).commit();
+
                                     startActivity(new Intent(RegisterActivity.this, MainActivity.class));
                                     finishAffinity();
                                 }

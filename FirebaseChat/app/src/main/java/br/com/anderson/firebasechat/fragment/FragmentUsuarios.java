@@ -4,7 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.support.v4.app.Fragment;
+import androidx.fragment.app.Fragment;
 import android.util.Log;
 import android.view.View;
 import android.view.LayoutInflater;
@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import br.com.anderson.firebasechat.ChatActivity;
-import br.com.anderson.firebasechat.MainActivity;
 import br.com.anderson.firebasechat.R;
 import br.com.anderson.firebasechat.adapter.AdapterUser;
 import br.com.anderson.firebasechat.model.User;
